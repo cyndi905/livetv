@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 仅在推送版本标签时触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'  # 使用特定的 Go 版本
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run tests
+        run: go test ./...
+        
+      - name: Install mingw-w64
+        run: sudo apt-get install -y mingw-w64
+
+      - name: Build for Linux
+        run: |
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o livetv-linux-amd64
+
+      - name: Build for Windows
+        env:
+          CGO_ENABLED: 1
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: |
+          go build -o livetv-windows-amd64.exe
+
+      - name: Get the release ID
+        id: get_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const release = releases.find(r => r.tag_name === process.env.GITHUB_REF_NAME);
+            if (!release) {
+              throw new Error(`Release with tag ${process.env.GITHUB_REF_NAME} not found`);
+            }
+            core.setOutput('release_id', release.id);
+
+      - name: Upload Linux Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=livetv-linux-amd64
+          asset_path: ./livetv-linux-amd64
+          asset_name: livetv-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=livetv-windows-amd64.exe
+          asset_path: ./livetv-windows-amd64.exe
+          asset_name: livetv-windows-amd64.exe
+          asset_content_type: application/octet-stream
