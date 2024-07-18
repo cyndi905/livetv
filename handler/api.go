@@ -266,23 +266,30 @@ func NewChannelHandler(c *gin.Context) {
 		return
 	}
 	chProxy := c.PostForm("proxy") != ""
-	mch := model.Channel{
-		Name:     chName,
-		URL:      chURL,
-		Proxy:    chProxy,
-		ProxyUrl: chProxyUrl,
-		Parser:   chParser,
-		TsProxy:  chTsProxy,
-		Category: chCategory,
+	// 检查URL是否包含“#”字符
+	urls := strings.Split(chURL, "#")
+	for _, url := range urls {
+		url = strings.TrimSpace(url)
+		if url == "" {
+			continue
+		}
+		mch := model.Channel{
+			Name:     chName,
+			URL:      url,
+			Proxy:    chProxy,
+			ProxyUrl: chProxyUrl,
+			Parser:   chParser,
+			TsProxy:  chTsProxy,
+			Category: chCategory,
+		}
+		err := service.SaveChannel(mch)
+		if err != nil {
+			log.Println(err.Error())
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		go service.UpdateURLCacheSingle(url, chProxyUrl, chParser, true) // update liveURL on adding new channel
 	}
-	err := service.SaveChannel(mch)
-	if err != nil {
-		log.Println(err.Error())
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	c.String(http.StatusOK, "")
-	go service.UpdateURLCacheSingle(chURL, chProxyUrl, chParser, true) // update liveURL on adding new channel
 }
 
 func AuthProbeHandler(c *gin.Context) {

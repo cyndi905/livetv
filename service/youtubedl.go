@@ -58,6 +58,7 @@ func GetLiveM3U8(youtubeURL string, proxyUrl string, Parser string) (*model.Live
 	}
 }
 
+// 检查直播源是否可用
 // returns: content, updated m3u8url (if needed), error
 func GetM3U8Content(ChannelURL string, liveM3U8 string, ProxyUrl string, Parser string, flags ...bool) (string, string, error) {
 	// parse the optional flags
