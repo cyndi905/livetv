@@ -41,6 +41,25 @@ func M3UHandler(c *gin.Context) {
 	}
 	c.Data(http.StatusOK, "application/vnd.apple.mpegurl", []byte(content))
 }
+func TXTHandler(c *gin.Context) {
+	disableProtection := os.Getenv("LIVETV_FREEACCESS") == "1"
+	// verify token against the unique token of the requested channel
+	if !disableProtection {
+		token := c.Query("token")
+		if token != global.GetSecretToken() { // invalid token
+			c.String(http.StatusForbidden, "Forbidden")
+			return
+		}
+	}
+
+	content, err := service.TXTGenerate()
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(content))
+}
 
 func LivePreHandler(c *gin.Context) {
 	channelNumber := util.String2Uint(c.Query("c"))

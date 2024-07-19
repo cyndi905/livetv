@@ -223,16 +223,22 @@ func ChannelListHandler(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "error: %s", err.Error())
 		return
 	}
-	channels := make([]Channel, len(channelModels)+1)
+	channels := make([]Channel, len(channelModels)+2)
 	channels[0] = Channel{
 		ID:     0,
 		Name:   "playlist",
 		M3U8:   fmt.Sprintf("%s/lives.m3u?token=%s", baseUrl, global.GetSecretToken()),
 		Status: service.Ok,
 	}
+	channels[1] = Channel{
+		ID:     1,
+		Name:   "playlistTxt",
+		M3U8:   fmt.Sprintf("%s/lives.txt?token=%s", baseUrl, global.GetSecretToken()),
+		Status: service.Ok,
+	}
 	for i, v := range channelModels {
 		status := service.GetStatus(v.URL)
-		channels[i+1] = Channel{
+		channels[i+2] = Channel{
 			ID:         v.ID,
 			Name:       v.Name,
 			URL:        v.URL,
