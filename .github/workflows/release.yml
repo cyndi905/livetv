@@ -39,7 +39,7 @@ jobs:
 
       - name: Build for Linux
         run: |
-          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o livetv-linux-amd64
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o livetv-linux-amd64
 
       - name: Build for Windows
         env:
@@ -48,7 +48,7 @@ jobs:
           GOARCH: amd64
           CC: x86_64-w64-mingw32-gcc
         run: |
-          go build -o livetv-windows-amd64.exe
+          go build -ldflags="-s -w" -o livetv-windows-amd64.exe
 
       - name: Get the release ID
         id: get_release
