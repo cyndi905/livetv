@@ -121,10 +121,10 @@ func FetchHandler(c *gin.Context) {
 }
 
 func CaptchaHandler(c *gin.Context) {
-	if sessions.Default(c).Get("logined") == true {
-		c.String(http.StatusOK, "{}") // do not generate captcha for loggin users
-		return
-	}
+	//if sessions.Default(c).Get("logined") == true {
+	//	c.String(http.StatusOK, "{}") // do not generate captcha for loggin users
+	//	return
+	//}
 	captcha, err := recaptcha.DefaultCaptcha.GenerateCaptcha()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
