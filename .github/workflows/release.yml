@@ -16,7 +16,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22'  # 使用特定的 Go 版本
+          go-version: '1.22'
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -33,15 +33,30 @@ jobs:
 
       - name: Run tests
         run: go test ./...
-        
-      - name: Install mingw-w64
-        run: sudo apt-get install -y mingw-w64
 
-      - name: Build for Linux
+      - name: Install mingw-w64 (for Windows cross-compilation)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+
+      # ========================
+      # Linux amd64
+      # ========================
+      - name: Build for Linux amd64
         run: |
           CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o livetv-linux-amd64
 
-      - name: Build for Windows
+      # ========================
+      # Linux arm64
+      # ========================
+      - name: Build for Linux arm64
+        run: |
+          CGO_ENABLED=1 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o livetv-linux-arm64
+
+      # ========================
+      # Windows amd64
+      # ========================
+      - name: Build for Windows amd64
         env:
           CGO_ENABLED: 1
           GOOS: windows
@@ -50,6 +65,21 @@ jobs:
         run: |
           go build -ldflags="-s -w" -o livetv-windows-amd64.exe
 
+      # ========================
+      # Windows arm64
+      # ========================
+      - name: Build for Windows arm64
+        env:
+          CGO_ENABLED: 1
+          GOOS: windows
+          GOARCH: arm64
+          CC: aarch64-w64-mingw32-gcc
+        run: |
+          go build -ldflags="-s -w" -o livetv-windows-arm64.exe
+
+      # ========================
+      # 获取 Release ID
+      # ========================
       - name: Get the release ID
         id: get_release
         uses: actions/github-script@v6
@@ -65,22 +95,54 @@ jobs:
             }
             core.setOutput('release_id', release.id);
 
-      - name: Upload Linux Release Asset
+      # ========================
+      # 上传 Linux amd64
+      # ========================
+      - name: Upload Linux amd64 Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=livetv-linux-amd64
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./livetv-linux-amd64
           asset_name: livetv-linux-amd64
           asset_content_type: application/octet-stream
 
-      - name: Upload Windows Release Asset
+      # ========================
+      # 上传 Linux arm64
+      # ========================
+      - name: Upload Linux arm64 Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=livetv-windows-amd64.exe
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./livetv-linux-arm64
+          asset_name: livetv-linux-arm64
+          asset_content_type: application/octet-stream
+
+      # ========================
+      # 上传 Windows amd64
+      # ========================
+      - name: Upload Windows amd64 Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./livetv-windows-amd64.exe
           asset_name: livetv-windows-amd64.exe
+          asset_content_type: application/octet-stream
+
+      # ========================
+      # 上传 Windows arm64
+      # ========================
+      - name: Upload Windows arm64 Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./livetv-windows-arm64.exe
+          asset_name: livetv-windows-arm64.exe
           asset_content_type: application/octet-stream
