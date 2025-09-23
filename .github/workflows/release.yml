@@ -44,6 +44,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu
 
+      - name: Install MinGW-w64 for Windows ARM64
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-w64-mingw32
+
       # ========================
       # Linux amd64
       # ========================
@@ -78,7 +83,7 @@ jobs:
       # ========================
       # Windows arm64
       # ========================
-      - name: Build for Windows arm64
+      - name: Build for Windows arm64 (with CGO)
         env:
           CGO_ENABLED: 1
           GOOS: windows
