@@ -47,6 +47,13 @@ jobs:
       # ========================
       # Linux amd64
       # ========================
+      - name: Build for Linux amd64
+        run: |
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o livetv-linux-amd64
+
+      # ========================
+      # Linux arm64
+      # ========================
       - name: Build for Linux arm64
         env:
           CGO_ENABLED: 1
@@ -55,13 +62,6 @@ jobs:
           CC: aarch64-linux-gnu-gcc
         run: |
           go build -ldflags="-s -w" -o livetv-linux-arm64
-
-      # ========================
-      # Linux arm64
-      # ========================
-      - name: Build for Linux arm64
-        run: |
-          CGO_ENABLED=1 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o livetv-linux-arm64
 
       # ========================
       # Windows amd64
